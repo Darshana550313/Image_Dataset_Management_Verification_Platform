@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 🌿 Plant Information Management System (Enhanced)
 A complete Flask-based web application for managing plant information with user submissions, admin review workflow, search & filter, and dataset export capabilities.
 ✨ Features
@@ -144,3 +145,6 @@ Database uses MySQL with proper foreign key relationships
 Dataset export creates ZIP in memory (no temp files needed)
 📝 License
 Open source project for educational purposes.
+=======
+# Image_Dataset_Management_-_Verification_Platform-
+>>>>>>> 77f4c6426c14afe841134c68838166d29df8b5a7
