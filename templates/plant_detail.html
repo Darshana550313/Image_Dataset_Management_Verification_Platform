@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plant.name }} - Plant Information System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .back-link:hover { color: #10b981; gap: 0.75rem; }
+    .detail-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(30, 41, 59, 0.15);
+    }
+    .detail-header h1 {
+        font-size: 2.4rem;
+        margin-bottom: 0.75rem;
+    }
+    .detail-header p {
+        color: rgba(255,255,255,0.8);
+        font-size: 1.05rem;
+    }
+    .badge-row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.25rem;
+    }
+    .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(16, 185, 129, 0.18);
+        color: #d1fae5;
+        border: 1px solid rgba(167, 243, 208, 0.35);
+        padding: 0.45rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 2rem;
+    }
+    .image-card, .info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .image-card h2, .info-card h2 {
+        font-size: 1.3rem;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .image-card h2 i, .info-card h2 i {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #10b981;
+    }
+    .main-image {
+        width: 100%;
+        height: 360px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f1f5f9;
+        margin-bottom: 1rem;
+    }
+    .main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    .image-item {
+        height: 150px;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #f1f5f9;
+        position: relative;
+    }
+    .image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .image-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        color: white;
+        background: linear-gradient(to top, rgba(30, 41, 59, 0.85), transparent);
+        padding: 1rem 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .info-list {
+        display: grid;
+        gap: 1rem;
+    }
+    .varieties-section {
+        margin-top: 2rem;
+    }
+    .variety-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .variety-card h2 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .variety-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    .variety-meta span {
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 18px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .variety-description {
+        margin-top: 0.9rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+    .variety-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .variety-image-item {
+        position: relative;
+        height: 140px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f1f5f9;
+    }
+    .variety-images img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .variety-image-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        color: white;
+        background: linear-gradient(to top, rgba(30, 41, 59, 0.85), transparent);
+        padding: 1rem 0.75rem 0.45rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .no-variety-images {
+        margin-top: 1rem;
+        color: #94a3b8;
+        font-style: italic;
+    }
+    .info-item {
+        background: #f8fafc;
+        border-radius: 12px;
+        border-left: 4px solid #10b981;
+        overflow: hidden;
+    }
+    .info-toggle {
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 1rem;
+        color: #1e293b;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+    }
+    .info-toggle span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .info-toggle i:last-child {
+        color: #64748b;
+        transition: transform 0.3s ease;
+    }
+    .info-item.active .info-toggle i:last-child {
+        transform: rotate(180deg);
+    }
+    .info-content {
+        display: none;
+        padding: 0 1rem 1rem;
+    }
+    .info-item.active .info-content {
+        display: block;
+    }
+    .info-content label {
+        display: none;
+        color: #64748b;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+    .info-content p {
+        color: #1e293b;
+        line-height: 1.6;
+    }
+    .empty {
+        color: #94a3b8;
+        font-style: italic;
+    }
+    @media (max-width: 900px) {
+        .detail-grid { grid-template-columns: 1fr; }
+        .detail-header h1 { font-size: 2rem; }
+    }
+    @media (max-width: 640px) {
+        .detail-page { padding: 1rem; }
+        .detail-header, .image-card, .info-card { padding: 1.25rem; border-radius: 16px; }
+        .main-image { height: 260px; }
+        .image-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <a href="{{ url_for('index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Plants
+    </a>
+
+    <section class="detail-header fade-in">
+        <h1>{{ plant.name }}</h1>
+        <p>{{ plant.scientific_name or 'Scientific name not provided' }}</p>
+        <div class="badge-row">
+            <span class="detail-badge"><i class="fas fa-seedling"></i> {{ plant.plant_type }}</span>
+            <span class="detail-badge"><i class="fas fa-folder"></i> {{ plant.category }}</span>
+            {% if plant.marathi_name %}
+            <span class="detail-badge"><i class="fas fa-language"></i> Marathi: {{ plant.marathi_name }}</span>
+            {% endif %}
+            {% if plant.hindi_name %}
+            <span class="detail-badge"><i class="fas fa-language"></i> Hindi: {{ plant.hindi_name }}</span>
+            {% endif %}
+            {% if plant.family %}
+            <span class="detail-badge"><i class="fas fa-sitemap"></i> {{ plant.family }}</span>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="detail-grid">
+        <section class="image-card fade-in">
+            <h2><i class="fas fa-images"></i> Plant Images</h2>
+            <div class="main-image">
+                {% if images and images.main_image %}
+                <a href="{{ get_image_url(images.main_image) }}" target="_blank">
+                    <img src="{{ get_image_url(images.main_image) }}" alt="{{ plant.name }} main image">
+                </a>
+                {% else %}
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #cbd5e1;">
+                    <i class="fas fa-image" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="image-grid">
+                {% for field, label, icon in [
+                    ('leaf_image', 'Leaf', 'leaf'),
+                    ('flower_image', 'Flower', 'spa'),
+                    ('fruit_image', 'Fruit', 'apple-alt'),
+                    ('bark_image', 'Bark/Stem', 'grip-lines-vertical'),
+                    ('root_image', 'Root', 'carrot')
+                ] %}
+                    {% if images and images[field] %}
+                    <div class="image-item">
+                        <a href="{{ get_image_url(images[field]) }}" target="_blank">
+                            <img src="{{ get_image_url(images[field]) }}" alt="{{ plant.name }} {{ label }}">
+                        </a>
+                        <div class="image-label"><i class="fas fa-{{ icon }}"></i> {{ label }}</div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="info-card fade-in">
+            <h2><i class="fas fa-info-circle"></i> Plant Details</h2>
+            <div class="info-list">
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-language"></i> Local Names</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>
+                            Marathi: {{ plant.marathi_name or 'Not provided' }}<br>
+                            Hindi: {{ plant.hindi_name or 'Not provided' }}
+                        </p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-align-left"></i> Description</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>{{ plant.description or '<span class="empty">No description available.</span>'|safe }}</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-heartbeat"></i> Medicinal Uses</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>{{ plant.medicinal_uses or '<span class="empty">No medicinal uses provided.</span>'|safe }}</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-apple-alt"></i> Nutritional Benefits</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>{{ plant.nutritional_benefits or '<span class="empty">No nutritional benefits provided.</span>'|safe }}</p>
+                    </div>
+                </div>
+                {% if plant.varieties %}
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-list"></i> Varieties</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>{{ plant.varieties }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="info-item">
+                    <button type="button" class="info-toggle"><span><i class="fas fa-user"></i> Submitted By</span><i class="fas fa-chevron-down"></i></button>
+                    <div class="info-content">
+                        <p>{{ plant.submitted_by or 'Anonymous' }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {% if varieties %}
+    <section class="varieties-section fade-in">
+        {% for variety in varieties %}
+        <div class="variety-card">
+            <h2><i class="fas fa-layer-group"></i> {{ variety.variety_name }}</h2>
+            <div class="variety-meta">
+                <span>Marathi: {{ variety.marathi_name or 'Not provided' }}</span>
+                <span>Hindi: {{ variety.hindi_name or 'Not provided' }}</span>
+            </div>
+            {% if variety.description %}
+            <p class="variety-description">{{ variety.description }}</p>
+            {% endif %}
+            {% set has_variety_images = namespace(value=false) %}
+            <div class="variety-images">
+                {% for image_type, files in variety.images.items() %}
+                    {% for filename in files %}
+                    {% set has_variety_images.value = true %}
+                    <a class="variety-image-item" href="{{ get_image_url(filename) }}" target="_blank">
+                        <img src="{{ get_image_url(filename) }}" alt="{{ variety.variety_name }} {{ image_type }}">
+                        <span class="variety-image-label">{{ image_type|title }}</span>
+                    </a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% if not has_variety_images.value %}
+            <p class="no-variety-images">No variety images uploaded.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.info-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+            button.closest('.info-item').classList.toggle('active');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-layout {
+        display: flex;
+        min-height: calc(100vh - 70px);
+    }
+    .admin-sidebar {
+        width: 260px;
+        background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 2rem 1rem;
+        position: fixed;
+        height: 100%;
+        overflow-y: auto;
+    }
+    .admin-sidebar .sidebar-header {
+        text-align: center;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 2rem;
+    }
+    .admin-sidebar .sidebar-header i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        color: #10b981;
+    }
+    .admin-sidebar .sidebar-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .admin-sidebar .sidebar-header p {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+    }
+    .sidebar-menu {
+        list-style: none;
+    }
+    .sidebar-menu li { margin-bottom: 0.5rem; }
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    .sidebar-menu a i { width: 24px; text-align: center; }
+    .sidebar-footer {
+        margin-top: auto;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-footer a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    .sidebar-footer a:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .admin-main {
+        margin-left: 260px;
+        flex: 1;
+        padding: 2rem;
+        background: #f8fafc;
+        min-height: calc(100vh - 70px);
+    }
+
+    .logs-header {
+        margin-bottom: 2rem;
+    }
+    .logs-header h1 {
+        font-size: 2rem;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .logs-header p {
+        color: #64748b;
+    }
+
+    .logs-table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .logs-table th {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .logs-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .logs-table tr:hover { background: #fafafa; }
+    .logs-table tr:last-child td { border-bottom: none; }
+
+    .log-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .log-action.publish { background: #d1fae5; color: #065f46; }
+    .log-action.reject { background: #fee2e2; color: #991b1b; }
+    .log-action.unpublish { background: #fef3c7; color: #92400e; }
+    .log-action.delete { background: #fee2e2; color: #dc2626; }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+    .empty-state p {
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+        .admin-sidebar { width: 200px; }
+        .admin-main { margin-left: 200px; }
+    }
+    @media (max-width: 768px) {
+        .admin-sidebar { display: none; }
+        .admin-main { margin-left: 0; }
+        .logs-table { font-size: 0.85rem; }
+        .logs-table th, .logs-table td { padding: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-user-shield"></i>
+            <h2>Admin Panel</h2>
+            <p>{{ session.admin_username }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('admin_logs') }}" class="active"><i class="fas fa-history"></i> Activity Logs</a></li>
+            <li><a href="{{ url_for('admin_dataset') }}"><i class="fas fa-database"></i> Dataset</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> View Website</a>
+            <a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="logs-header">
+            <a href="{{ url_for('admin_dashboard') }}" style="color: #64748b; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1><i class="fas fa-history"></i> Activity Logs</h1>
+            <p>Track all admin actions on plant submissions</p>
+        </div>
+
+        {% if logs %}
+        <div class="logs-table-container fade-in">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Action</th>
+                        <th>Plant</th>
+                        <th>Admin</th>
+                        <th>Date & Time</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <span class="log-action {{ log.action }}">
+                                <i class="fas fa-{{ 'check' if log.action == 'publish' else 'times' if log.action == 'reject' else 'undo' if log.action == 'unpublish' else 'trash' }}"></i>
+                                {{ log.action.upper() }}
+                            </span>
+                        </td>
+                        <td>{{ log.plant_name or 'Deleted Plant' }}</td>
+                        <td><i class="fas fa-user-shield" style="color: #10b981; margin-right: 0.3rem;"></i> {{ log.admin_username }}</td>
+                        <td>{{ log.action_date.strftime('%b %d, %Y at %I:%M %p') }}</td>
+                        <td>{{ log.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="logs-table-container">
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No activity logs yet</p>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

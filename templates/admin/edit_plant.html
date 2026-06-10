@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ plant.name }} - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+    .edit-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+    .header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; }
+    .header h1 { color: #1e293b; }
+    .back-btn { color: #64748b; text-decoration: none; font-weight: 600; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { color: #475569; font-weight: 600; }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.85rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; font-family: 'Poppins', sans-serif; }
+    .form-group textarea { min-height: 110px; resize: vertical; }
+    .section-title { margin: 2rem 0 1rem; color: #1e293b; display: flex; align-items: center; gap: 0.6rem; }
+    .submit-btn, .add-variety-btn { border: none; border-radius: 14px; padding: 1rem 1.4rem; font-weight: 700; font-family: 'Poppins', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .submit-btn { width: 100%; justify-content: center; background: #10b981; color: white; margin-top: 2rem; }
+    .add-variety-btn { background: #dbeafe; color: #1e40af; }
+    .variety-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
+    .current-list { color: #64748b; margin-bottom: 1rem; }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="admin-main">
+    <div class="header">
+        <div>
+            <a class="back-btn" href="{{ url_for('admin_view_plant', plant_id=plant.id) }}"><i class="fas fa-arrow-left"></i> Back to Review</a>
+            <h1><i class="fas fa-edit"></i> Edit {{ plant.name }}</h1>
+        </div>
+    </div>
+
+    <form class="edit-card" method="POST" enctype="multipart/form-data">
+        <div class="form-grid">
+            <div class="form-group"><label>Plant Name *</label><input name="name" value="{{ plant.name }}" required></div>
+            <div class="form-group"><label>Marathi Name</label><input name="marathi_name" placeholder="Marathi name or English spelling" value="{{ plant.marathi_name or '' }}"></div>
+            <div class="form-group"><label>Hindi Name</label><input name="hindi_name" placeholder="Hindi name or English spelling" value="{{ plant.hindi_name or '' }}"></div>
+            <div class="form-group"><label>Scientific Name</label><input name="scientific_name" value="{{ plant.scientific_name or '' }}"></div>
+            <div class="form-group"><label>Family</label><input name="family" value="{{ plant.family or '' }}"></div>
+            <div class="form-group">
+                <label>Plant Type *</label>
+                <select name="plant_type" required>
+                    {% for item in plant_types %}
+                    <option value="{{ item }}" {{ 'selected' if plant.plant_type == item else '' }}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Category *</label>
+                <select name="category" required>
+                    {% for item in categories %}
+                    <option value="{{ item }}" {{ 'selected' if plant.category == item else '' }}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group full"><label>Description</label><textarea name="description">{{ plant.description or '' }}</textarea></div>
+            <div class="form-group full"><label>Medicinal Uses</label><textarea name="medicinal_uses">{{ plant.medicinal_uses or '' }}</textarea></div>
+            <div class="form-group full"><label>Nutritional Benefits</label><textarea name="nutritional_benefits">{{ plant.nutritional_benefits or '' }}</textarea></div>
+            <div class="form-group full"><label>Varieties Text</label><input name="varieties" value="{{ plant.varieties or '' }}"></div>
+        </div>
+
+        <h2 class="section-title"><i class="fas fa-images"></i> Replace Plant Images</h2>
+        <p class="current-list">Upload only images you want to replace. Each image must be 3MB or smaller.</p>
+        <div class="form-grid">
+            <div class="form-group"><label>Main Tree</label><input type="file" name="main_image" accept="image/*"></div>
+            <div class="form-group"><label>Leaf</label><input type="file" name="leaf_image" accept="image/*"></div>
+            <div class="form-group"><label>Fruit</label><input type="file" name="fruit_image" accept="image/*"></div>
+            <div class="form-group"><label>Flower</label><input type="file" name="flower_image" accept="image/*"></div>
+            <div class="form-group"><label>Bark/Stem</label><input type="file" name="bark_image" accept="image/*"></div>
+            <div class="form-group"><label>Root</label><input type="file" name="root_image" accept="image/*"></div>
+        </div>
+
+        <h2 class="section-title"><i class="fas fa-layer-group"></i> Add More Varieties / Sub Types</h2>
+        {% if varieties %}
+        <p class="current-list">Current varieties: {% for variety in varieties %}{{ variety.variety_name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+        <input type="hidden" name="variety_count" id="variety_count" value="0">
+        <div id="varieties-container"></div>
+        <button type="button" class="add-variety-btn" onclick="addVarietyBlock()"><i class="fas fa-plus"></i> Add Variety</button>
+
+        <button type="submit" class="submit-btn"><i class="fas fa-save"></i> Update Plant</button>
+    </form>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const devanagariMap = {
+    'ksha':'क्ष','dnya':'ज्ञ','gya':'ज्ञ','shra':'श्र','tra':'त्र','chh':'छ','kh':'ख','gh':'घ','ch':'च','jh':'झ','th':'थ','dh':'ध','ph':'फ','bh':'भ','sh':'श','aa':'आ','ee':'ई','ii':'ई','oo':'ऊ','uu':'ऊ','ai':'ऐ','au':'औ','a':'अ','i':'इ','u':'उ','e':'ए','o':'ओ','ka':'क','k':'क','ga':'ग','g':'ग','ca':'क','c':'क','ja':'ज','j':'ज','ta':'त','t':'त','da':'द','d':'द','na':'न','n':'न','pa':'प','p':'प','ba':'ब','b':'ब','ma':'म','m':'म','ya':'य','y':'य','ra':'र','r':'र','la':'ल','l':'ल','va':'व','wa':'व','v':'व','sa':'स','s':'स','ha':'ह','h':'ह'
+};
+const wordOverrides = {
+    aam: 'आम', amba: 'आंबा', mango: 'आंबा', hapus: 'हापूस', haapus: 'हापूस',
+    kesar: 'केसर', devgad: 'देवगड', neem: 'नीम', nimb: 'निंब', tulsi: 'तुळस',
+    apple: 'सफरचंद', banana: 'केळी', keli: 'केळी', tomato: 'टोमॅटो'
+};
+function transliterateWord(word) {
+    const original = word;
+    const lower = word.toLowerCase();
+    if (wordOverrides[lower]) return wordOverrides[lower];
+    let output = '';
+    let index = 0;
+    const keys = Object.keys(devanagariMap).sort((a, b) => b.length - a.length);
+    while (index < lower.length) {
+        const key = keys.find(item => lower.startsWith(item, index));
+        if (key) {
+            output += devanagariMap[key];
+            index += key.length;
+        } else {
+            output += original[index];
+            index += 1;
+        }
+    }
+    return output;
+}
+function transliterateText(value) {
+    if (/[\u0900-\u097F]/.test(value)) return value;
+    return value.replace(/[A-Za-z]+/g, transliterateWord);
+}
+function attachLocalTransliteration() {
+    document.querySelectorAll('input[name*="marathi_name"], input[name*="hindi_name"]').forEach(input => {
+        if (input.dataset.localTransliteration === 'on') return;
+        input.dataset.localTransliteration = 'on';
+        input.addEventListener('blur', () => { input.value = transliterateText(input.value); });
+        input.addEventListener('keydown', event => {
+            if (event.key === ' ' || event.key === 'Enter') {
+                setTimeout(() => { input.value = transliterateText(input.value); }, 0);
+            }
+        });
+    });
+}
+attachLocalTransliteration();
+let varietyIndex = 0;
+function addVarietyBlock() {
+    const container = document.getElementById('varieties-container');
+    const index = varietyIndex++;
+    document.getElementById('variety_count').value = varietyIndex;
+    const block = document.createElement('div');
+    block.className = 'variety-card';
+    block.innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Variety Name</label><input name="variety_name_${index}" placeholder="e.g., Hapus, Kesar, Devgad"></div>
+            <div class="form-group"><label>Marathi Name</label><input name="variety_marathi_name_${index}" placeholder="Marathi name or English spelling"></div>
+            <div class="form-group"><label>Hindi Name</label><input name="variety_hindi_name_${index}" placeholder="Hindi name or English spelling"></div>
+            <div class="form-group full"><label>Description</label><textarea name="variety_description_${index}"></textarea></div>
+            <div class="form-group"><label>Tree Images</label><input type="file" name="variety_tree_images_${index}" accept="image/*" multiple></div>
+            <div class="form-group"><label>Leaf Images</label><input type="file" name="variety_leaf_images_${index}" accept="image/*" multiple></div>
+            <div class="form-group"><label>Fruit Images</label><input type="file" name="variety_fruit_images_${index}" accept="image/*" multiple></div>
+            <div class="form-group"><label>Flower Images</label><input type="file" name="variety_flower_images_${index}" accept="image/*" multiple></div>
+            <div class="form-group"><label>Bark Images</label><input type="file" name="variety_bark_images_${index}" accept="image/*" multiple></div>
+            <div class="form-group"><label>Root Images</label><input type="file" name="variety_root_images_${index}" accept="image/*" multiple></div>
+        </div>`;
+    container.appendChild(block);
+    attachLocalTransliteration();
+}
+
+const betterNameOverrides = {
+    marathi: {
+        banana: '\u0915\u0947\u0933\u0940', keli: '\u0915\u0947\u0933\u0940',
+        rajapuri: '\u0930\u093e\u091c\u093e\u092a\u0941\u0930\u0940', rajapurii: '\u0930\u093e\u091c\u093e\u092a\u0941\u0930\u0940',
+        mango: '\u0906\u0902\u092c\u093e', amba: '\u0906\u0902\u092c\u093e',
+        apple: '\u0938\u092b\u0930\u091a\u0902\u0926', neem: '\u0928\u093f\u0902\u092c', tulsi: '\u0924\u0941\u0933\u0938'
+    },
+    hindi: {
+        banana: '\u0915\u0947\u0932\u093e', keli: '\u0915\u0947\u0932\u093e',
+        rajapuri: '\u0930\u093e\u091c\u093e\u092a\u0941\u0930\u0940', rajapurii: '\u0930\u093e\u091c\u093e\u092a\u0941\u0930\u0940',
+        mango: '\u0906\u092e', amba: '\u0906\u092e',
+        apple: '\u0938\u0947\u092c', neem: '\u0928\u0940\u092e', tulsi: '\u0924\u0941\u0932\u0938\u0940'
+    }
+};
+const betterConsonants = {
+    ksh:'\u0915\u094d\u0937', dny:'\u091c\u094d\u091e', gy:'\u091c\u094d\u091e', shr:'\u0936\u094d\u0930', tr:'\u0924\u094d\u0930',
+    chh:'\u091b', kh:'\u0916', gh:'\u0918', ch:'\u091a', jh:'\u091d', th:'\u0925', dh:'\u0927', ph:'\u092b', bh:'\u092d', sh:'\u0936',
+    k:'\u0915', g:'\u0917', c:'\u0915', j:'\u091c', t:'\u0924', d:'\u0926', n:'\u0928', p:'\u092a', b:'\u092c', m:'\u092e',
+    y:'\u092f', r:'\u0930', l:'\u0932', v:'\u0935', w:'\u0935', s:'\u0938', h:'\u0939'
+};
+const betterVowels = { aa:'\u093e', ee:'\u0940', ii:'\u0940', oo:'\u0942', uu:'\u0942', ai:'\u0948', au:'\u094c', a:'', i:'\u093f', u:'\u0941', e:'\u0947', o:'\u094b' };
+const betterIndependentVowels = { aa:'\u0906', ee:'\u0908', ii:'\u0908', oo:'\u090a', uu:'\u090a', ai:'\u0910', au:'\u0914', a:'\u0905', i:'\u0907', u:'\u0909', e:'\u090f', o:'\u0913' };
+function betterLanguage(inputName) {
+    return (inputName || '').includes('hindi') ? 'hindi' : 'marathi';
+}
+function betterRomanWord(word, language) {
+    const lower = word.toLowerCase();
+    const override = betterNameOverrides[language][lower] || betterNameOverrides.marathi[lower];
+    if (override) return override;
+    let output = '';
+    let index = 0;
+    const consonantKeys = Object.keys(betterConsonants).sort((a, b) => b.length - a.length);
+    const vowelKeys = Object.keys(betterVowels).sort((a, b) => b.length - a.length);
+    while (index < lower.length) {
+        const consonant = consonantKeys.find(key => lower.startsWith(key, index));
+        if (consonant) {
+            output += betterConsonants[consonant];
+            index += consonant.length;
+            const vowel = vowelKeys.find(key => lower.startsWith(key, index));
+            if (vowel) {
+                output += betterVowels[vowel];
+                index += vowel.length;
+            }
+            continue;
+        }
+        const vowel = vowelKeys.find(key => lower.startsWith(key, index));
+        if (vowel) {
+            output += betterIndependentVowels[vowel];
+            index += vowel.length;
+            continue;
+        }
+        output += word[index];
+        index += 1;
+    }
+    return output;
+}
+function betterConvertNameInput(input, rawValue) {
+    const sourceValue = rawValue || input.value;
+    if (/[\u0900-\u097F]/.test(sourceValue) && !/[A-Za-z]/.test(sourceValue)) return;
+    const language = betterLanguage(input.name);
+    input.value = sourceValue.replace(/[A-Za-z]+/g, word => betterRomanWord(word, language));
+}
+attachLocalTransliteration = function() {
+    document.querySelectorAll('input[name*="marathi_name"], input[name*="hindi_name"]').forEach(input => {
+        if (input.dataset.betterLocalTransliteration === 'on') return;
+        input.dataset.betterLocalTransliteration = 'on';
+        input.addEventListener('input', () => { input.dataset.rawRomanValue = input.value; });
+        input.addEventListener('blur', () => betterConvertNameInput(input, input.dataset.rawRomanValue || input.value));
+        input.addEventListener('keydown', event => {
+            if (event.key === ' ' || event.key === 'Enter') {
+                const rawValue = input.value;
+                setTimeout(() => betterConvertNameInput(input, rawValue), 0);
+            }
+        });
+    });
+};
+attachLocalTransliteration();
+</script>
+{% endblock %}

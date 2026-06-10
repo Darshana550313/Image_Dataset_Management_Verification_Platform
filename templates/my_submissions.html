@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}My Submissions - Plant Information System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .submissions-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+    .page-header h1 {
+        color: #1e293b;
+        font-size: 2rem;
+        margin-bottom: 0.4rem;
+    }
+    .page-header p { color: #64748b; }
+    .upload-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #10b981;
+        color: white;
+        padding: 0.85rem 1.4rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .upload-link:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+    .submissions-table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .submissions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .submissions-table th {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .submissions-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .plant-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .plant-img {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: #f1f5f9;
+    }
+    .plant-row strong { color: #1e293b; }
+    .plant-row span {
+        display: block;
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-top: 0.2rem;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-published { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fee2e2; color: #991b1b; }
+    .action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .rejection-reason {
+        margin-top: 0.5rem;
+        color: #991b1b;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    .locked-text {
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #94a3b8;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    @media (max-width: 768px) {
+        .submissions-page { padding: 2rem 1rem; }
+        .submissions-table { font-size: 0.85rem; }
+        .submissions-table th, .submissions-table td { padding: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submissions-page">
+    <div class="page-header fade-in">
+        <div>
+            <h1><i class="fas fa-list"></i> My Submissions</h1>
+            <p>Track plants submitted by {{ session.user_name }}.</p>
+        </div>
+        <a href="{{ url_for('upload') }}" class="upload-link">
+            <i class="fas fa-cloud-upload-alt"></i> Upload Plant
+        </a>
+    </div>
+
+    <div class="submissions-table-container fade-in">
+        {% if plants %}
+        <table class="submissions-table">
+            <thead>
+                <tr>
+                    <th>Plant</th>
+                    <th>Type / Category</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plant in plants %}
+                <tr>
+                    <td>
+                        <div class="plant-row">
+                            {% if plant.main_image %}
+                            <img src="{{ get_image_url(plant.main_image) }}" class="plant-img" alt="{{ plant.name }}">
+                            {% else %}
+                            <div class="plant-img" style="display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-image" style="color: #cbd5e1;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ plant.name }}</strong>
+                                <span>{{ plant.scientific_name or 'No scientific name' }}</span>
+                                {% if plant.marathi_name or plant.hindi_name %}
+                                <span>{{ plant.marathi_name or '-' }} / {{ plant.hindi_name or '-' }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ plant.plant_type }}
+                        <div style="color: #64748b; font-size: 0.85rem;">{{ plant.category }}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ plant.status }}">
+                            <i class="fas fa-{{ 'clock' if plant.status == 'pending' else 'check-circle' if plant.status == 'published' else 'times-circle' }}"></i>
+                            {{ plant.status|upper }}
+                        </span>
+                        {% if plant.status == 'rejected' and plant.rejection_reason %}
+                        <div class="rejection-reason">
+                            <strong>Admin message:</strong> {{ plant.rejection_reason }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ plant.created_at.strftime('%b %d, %Y') if plant.created_at else 'N/A' }}</td>
+                    <td>
+                        {% if plant.status in ['pending', 'rejected'] %}
+                        <a href="{{ url_for('user_edit_plant', plant_id=plant.id) }}" class="action-link">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        {% else %}
+                        <span class="locked-text">Published - edit locked</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-seedling"></i>
+            <p>No submissions yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

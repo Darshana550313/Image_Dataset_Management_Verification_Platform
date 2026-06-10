@@ -1,0 +1,764 @@
+{% extends "base.html" %}
+
+{% block title %}Review: {{ plant.name }} - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-layout {
+        display: flex;
+        min-height: calc(100vh - 70px);
+    }
+    .admin-sidebar {
+        width: 260px;
+        background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 2rem 1rem;
+        position: fixed;
+        height: 100%;
+        overflow-y: auto;
+    }
+    .admin-sidebar .sidebar-header {
+        text-align: center;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 2rem;
+    }
+    .admin-sidebar .sidebar-header i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        color: #10b981;
+    }
+    .admin-sidebar .sidebar-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .admin-sidebar .sidebar-header p {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+    }
+    .sidebar-menu {
+        list-style: none;
+    }
+    .sidebar-menu li { margin-bottom: 0.5rem; }
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    .sidebar-menu a i { width: 24px; text-align: center; }
+    .sidebar-footer {
+        margin-top: auto;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-footer a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    .sidebar-footer a:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .admin-main {
+        margin-left: 260px;
+        flex: 1;
+        padding: 2rem;
+        background: #f8fafc;
+        min-height: calc(100vh - 70px);
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .review-header h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+        background: white;
+        color: #1e293b;
+    }
+
+    .status-banner {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+    }
+    .status-banner.pending { background: #fef3c7; color: #92400e; }
+    .status-banner.published { background: #d1fae5; color: #065f46; }
+    .status-banner.rejected { background: #fee2e2; color: #991b1b; }
+    .duplicate-alert {
+        background: #fff7ed;
+        color: #9a3412;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 2rem;
+    }
+    .duplicate-alert h3 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .duplicate-alert a {
+        color: #c2410c;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .duplicate-alert ul {
+        margin-left: 1.25rem;
+        line-height: 1.8;
+    }
+
+    .review-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    /* IMAGE GALLERY */
+    .image-gallery-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .image-gallery-card h2 {
+        font-size: 1.3rem;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .image-gallery-card h2 i {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #10b981;
+    }
+
+    .main-image-display {
+        width: 100%;
+        height: 350px;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        position: relative;
+        background: #f1f5f9;
+    }
+    .main-image-display img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .main-image-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(30, 41, 59, 0.9), transparent);
+        color: white;
+        padding: 1.5rem 1rem 1rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .other-images-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    .other-image-item {
+        border-radius: 14px;
+        overflow: hidden;
+        position: relative;
+        background: #f1f5f9;
+        height: 160px;
+    }
+    .other-image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .other-image-item:hover img { transform: scale(1.05); }
+    .other-image-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        color: white;
+        padding: 1rem 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .no-image-placeholder {
+        height: 160px;
+        background: #f1f5f9;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #cbd5e1;
+        gap: 0.5rem;
+    }
+    .no-image-placeholder i { font-size: 2rem; }
+    .no-image-placeholder span { font-size: 0.85rem; }
+
+    /* INFO CARD */
+    .info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .info-card h2 {
+        font-size: 1.3rem;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .info-card h2 i {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #10b981;
+    }
+
+    .info-grid { display: grid; gap: 1.25rem; }
+    .info-item {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border-left: 4px solid #10b981;
+    }
+    .info-item label {
+        display: block;
+        font-size: 0.8rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+    }
+    .info-item p {
+        color: #1e293b;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    .info-item .empty {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    /* ACTION BUTTONS */
+    .action-panel {
+        margin-top: 2rem;
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+    .action-panel h3 {
+        font-size: 1.2rem;
+        color: #374151;
+        margin-bottom: 1.5rem;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .action-btn-large {
+        padding: 1rem 2.5rem;
+        border: none;
+        border-radius: 14px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+    }
+    .action-btn-large:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .btn-publish-large {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+    }
+    .btn-publish-large:hover {
+        background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    }
+    .btn-reject-large {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: white;
+    }
+    .btn-reject-large:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+    }
+    .btn-unpublish-large {
+        background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+        color: white;
+    }
+    .btn-unpublish-large:hover {
+        background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+    }
+    .btn-edit-large {
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        color: white;
+    }
+    .reject-reason-input-large {
+        min-width: 240px;
+        padding: 1rem 1.2rem;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+    }
+    .variety-panel {
+        margin-top: 2rem;
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .variety-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-top: 1rem;
+    }
+    .variety-card h3 {
+        color: #1e293b;
+        margin-bottom: 0.6rem;
+    }
+    .variety-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .variety-meta span {
+        background: white;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .variety-description {
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+    .variety-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 0.75rem;
+    }
+    .variety-image-item {
+        position: relative;
+        height: 125px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #e2e8f0;
+    }
+    .variety-images img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .variety-image-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        color: white;
+        background: linear-gradient(to top, rgba(30, 41, 59, 0.85), transparent);
+        padding: 0.85rem 0.65rem 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .no-variety-images {
+        color: #94a3b8;
+        font-style: italic;
+        margin-top: 0.75rem;
+    }
+
+    @media (max-width: 1024px) {
+        .admin-sidebar { width: 200px; }
+        .admin-main { margin-left: 200px; }
+        .review-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+        .admin-sidebar { display: none; }
+        .admin-main { margin-left: 0; padding: 1rem; }
+        .main-image-display { height: 250px; }
+        .other-images-grid { grid-template-columns: 1fr; }
+        .action-buttons { flex-direction: column; }
+        .action-btn-large { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-user-shield"></i>
+            <h2>Admin Panel</h2>
+            <p>{{ session.admin_username }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('admin_logs') }}"><i class="fas fa-history"></i> Activity Logs</a></li>
+            <li><a href="{{ url_for('admin_dataset') }}"><i class="fas fa-database"></i> Dataset</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> View Website</a>
+            <a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="review-header">
+            <div>
+                <a href="{{ url_for('admin_dashboard') }}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <h1 style="margin-top: 0.5rem;"><i class="fas fa-search"></i> Review: {{ plant.name }}</h1>
+            </div>
+        </div>
+
+        <div class="status-banner {{ plant.status }}">
+            <i class="fas fa-{{ 'clock' if plant.status == 'pending' else 'check-circle' if plant.status == 'published' else 'times-circle' }}"></i>
+            Status: <strong>{{ plant.status.upper() }}</strong>
+            {% if plant.status == 'published' and plant.published_at %}
+                | Published on {{ plant.published_at.strftime('%B %d, %Y at %I:%M %p') }}
+            {% elif plant.status == 'rejected' %}
+                | Rejected
+            {% else %}
+                | Awaiting admin review
+            {% endif %}
+            {% if plant.status == 'rejected' and plant.rejection_reason %}
+                <br><strong>Reason:</strong> {{ plant.rejection_reason }}
+            {% endif %}
+        </div>
+
+        {% if duplicate_plants %}
+        <div class="duplicate-alert">
+            <h3><i class="fas fa-copy"></i> Possible duplicate plant found</h3>
+            <ul>
+                {% for duplicate in duplicate_plants %}
+                <li>
+                    <a href="{{ url_for('admin_view_plant', plant_id=duplicate.id) }}">{{ duplicate.name }}</a>
+                    {% if duplicate.marathi_name or duplicate.hindi_name %}
+                    - {{ duplicate.marathi_name or '-' }} / {{ duplicate.hindi_name or '-' }}
+                    {% endif %}
+                    {% if duplicate.scientific_name %}({{ duplicate.scientific_name }}){% endif %}
+                    - {{ duplicate.status|upper }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="review-grid">
+            <!-- LEFT: ALL IMAGES GROUPED -->
+            <div class="image-gallery-card fade-in">
+                <h2><i class="fas fa-images"></i> Plant Images</h2>
+
+                {% if images and images.main_image %}
+                <div class="main-image-display">
+                    <a href="{{ get_image_url(images.main_image) }}" target="_blank">
+                        <img src="{{ get_image_url(images.main_image) }}" alt="{{ plant.name }} - Main Tree">
+                    </a>
+                    <div class="main-image-label">
+                        <i class="fas fa-tree"></i> Main Tree Image
+                    </div>
+                </div>
+                {% else %}
+                <div class="main-image-display" style="display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center; color: #cbd5e1;">
+                        <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 0.5rem;"></i>
+                        <p>No main image uploaded</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="other-images-grid">
+                    {% if images and images.leaf_image %}
+                    <div class="other-image-item">
+                        <a href="{{ get_image_url(images.leaf_image) }}" target="_blank"><img src="{{ get_image_url(images.leaf_image) }}" alt="Leaf"></a>
+                        <div class="other-image-label"><i class="fas fa-leaf"></i> Leaf</div>
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-leaf"></i>
+                        <span>No leaf image</span>
+                    </div>
+                    {% endif %}
+
+                    {% if images and images.flower_image %}
+                    <div class="other-image-item">
+                        <a href="{{ get_image_url(images.flower_image) }}" target="_blank"><img src="{{ get_image_url(images.flower_image) }}" alt="Flower"></a>
+                        <div class="other-image-label"><i class="fas fa-spa"></i> Flower</div>
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-spa"></i>
+                        <span>No flower image</span>
+                    </div>
+                    {% endif %}
+
+                    {% if images and images.fruit_image %}
+                    <div class="other-image-item">
+                        <a href="{{ get_image_url(images.fruit_image) }}" target="_blank"><img src="{{ get_image_url(images.fruit_image) }}" alt="Fruit"></a>
+                        <div class="other-image-label"><i class="fas fa-apple-alt"></i> Fruit</div>
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-apple-alt"></i>
+                        <span>No fruit image</span>
+                    </div>
+                    {% endif %}
+
+                    {% if images and images.bark_image %}
+                    <div class="other-image-item">
+                        <a href="{{ get_image_url(images.bark_image) }}" target="_blank"><img src="{{ get_image_url(images.bark_image) }}" alt="Bark"></a>
+                        <div class="other-image-label"><i class="fas fa-grip-lines-vertical"></i> Bark/Stem</div>
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-grip-lines-vertical"></i>
+                        <span>No bark image</span>
+                    </div>
+                    {% endif %}
+
+                    {% if images and images.root_image %}
+                    <div class="other-image-item">
+                        <a href="{{ get_image_url(images.root_image) }}" target="_blank"><img src="{{ get_image_url(images.root_image) }}" alt="Root"></a>
+                        <div class="other-image-label"><i class="fas fa-carrot"></i> Root</div>
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-carrot"></i>
+                        <span>No root image</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- RIGHT: PLANT INFO -->
+            <div class="info-card fade-in">
+                <h2><i class="fas fa-info-circle"></i> Plant Details</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label><i class="fas fa-tag"></i> Plant Name</label>
+                        <p>{{ plant.name }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-language"></i> Marathi Name</label>
+                        <p>{{ plant.marathi_name or '<span class="empty">Not provided</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-language"></i> Hindi Name</label>
+                        <p>{{ plant.hindi_name or '<span class="empty">Not provided</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-flask"></i> Scientific Name</label>
+                        <p>{{ plant.scientific_name or '<span class="empty">Not provided</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-folder"></i> Family</label>
+                        <p>{{ plant.family or '<span class="empty">Not provided</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-seedling"></i> Plant Type</label>
+                        <p>{{ plant.plant_type }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-th-large"></i> Category</label>
+                        <p>{{ plant.category }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-align-left"></i> Description</label>
+                        <p>{{ plant.description or '<span class="empty">No description</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-heartbeat"></i> Medicinal Uses</label>
+                        <p>{{ plant.medicinal_uses or '<span class="empty">No info</span>'|safe }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="fas fa-apple-alt"></i> Nutritional Benefits</label>
+                        <p>{{ plant.nutritional_benefits or '<span class="empty">No info</span>'|safe }}</p>
+                    </div>
+                    {% if plant.varieties %}
+                    <div class="info-item">
+                        <label><i class="fas fa-list"></i> Varieties</label>
+                        <p>{{ plant.varieties }}</p>
+                    </div>
+                    {% endif %}
+                    <div class="info-item">
+                        <label><i class="fas fa-user"></i> Submitted By</label>
+                        <p>{{ plant.submitted_by or 'Anonymous' }} on {{ plant.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="action-panel fade-in">
+            <h3><i class="fas fa-gavel"></i> Admin Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('admin_edit_plant', plant_id=plant.id) }}" class="action-btn-large btn-edit-large">
+                    <i class="fas fa-edit"></i> EDIT / UPDATE
+                </a>
+                <a href="{{ url_for('admin_dataset_download_single_plant', plant_id=plant.id) }}" class="action-btn-large btn-edit-large">
+                    <i class="fas fa-download"></i> DATASET ZIP
+                </a>
+                {% if plant.status == 'pending' %}
+                <form method="POST" action="{{ url_for('admin_publish', plant_id=plant.id) }}" style="display: inline;">
+                    <button type="submit" class="action-btn-large btn-publish-large" onclick="return confirm('Publish this plant?')">
+                        <i class="fas fa-check-circle"></i> PUBLISH
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_reject', plant_id=plant.id) }}" style="display: inline-flex; gap: 0.75rem; align-items: center;">
+                    <input type="text" name="rejection_reason" class="reject-reason-input-large" placeholder="Reject reason" required>
+                    <button type="submit" class="action-btn-large btn-reject-large">
+                        <i class="fas fa-times-circle"></i> REJECT
+                    </button>
+                </form>
+                {% elif plant.status == 'published' %}
+                <form method="POST" action="{{ url_for('admin_unpublish', plant_id=plant.id) }}" style="display: inline;">
+                    <button type="submit" class="action-btn-large btn-unpublish-large" onclick="return confirm('Unpublish?')">
+                        <i class="fas fa-undo"></i> UNPUBLISH
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_reject', plant_id=plant.id) }}" style="display: inline-flex; gap: 0.75rem; align-items: center;">
+                    <input type="text" name="rejection_reason" class="reject-reason-input-large" placeholder="Reject reason" required>
+                    <button type="submit" class="action-btn-large btn-reject-large">
+                        <i class="fas fa-times-circle"></i> REJECT
+                    </button>
+                </form>
+                {% elif plant.status == 'rejected' %}
+                <form method="POST" action="{{ url_for('admin_publish', plant_id=plant.id) }}" style="display: inline;">
+                    <button type="submit" class="action-btn-large btn-publish-large">
+                        <i class="fas fa-check-circle"></i> PUBLISH
+                    </button>
+                </form>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('admin_delete', plant_id=plant.id) }}" style="display: inline;">
+                    <button type="submit" class="action-btn-large btn-reject-large" onclick="return confirm('Delete permanently?')">
+                        <i class="fas fa-trash"></i> DELETE
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% if varieties %}
+        <div class="variety-panel fade-in">
+            <h2><i class="fas fa-layer-group"></i> Varieties / Sub Types</h2>
+            {% for variety in varieties %}
+            <div class="variety-card">
+                <h3>{{ variety.variety_name }}</h3>
+                <div class="variety-meta">
+                    <span>Marathi: {{ variety.marathi_name or 'Not provided' }}</span>
+                    <span>Hindi: {{ variety.hindi_name or 'Not provided' }}</span>
+                </div>
+                {% if variety.description %}<p class="variety-description">{{ variety.description }}</p>{% endif %}
+                {% set has_variety_images = namespace(value=false) %}
+                <div class="variety-images">
+                    {% for image_type, files in variety.images.items() %}
+                        {% for filename in files %}
+                        {% set has_variety_images.value = true %}
+                        <a class="variety-image-item" href="{{ get_image_url(filename) }}" target="_blank">
+                            <img src="{{ get_image_url(filename) }}" alt="{{ variety.variety_name }} {{ image_type }}">
+                            <span class="variety-image-label">{{ image_type|title }}</span>
+                        </a>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                {% if not has_variety_images.value %}
+                <p class="no-variety-images">No variety images uploaded.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

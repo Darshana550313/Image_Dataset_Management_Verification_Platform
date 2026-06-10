@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Dataset Manager - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-layout {
+        display: flex;
+        min-height: calc(100vh - 70px);
+    }
+    .admin-sidebar {
+        width: 260px;
+        background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 2rem 1rem;
+        position: fixed;
+        height: 100%;
+        overflow-y: auto;
+    }
+    .admin-sidebar .sidebar-header {
+        text-align: center;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 2rem;
+    }
+    .admin-sidebar .sidebar-header i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        color: #10b981;
+    }
+    .admin-sidebar .sidebar-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .admin-sidebar .sidebar-header p {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+    }
+    .sidebar-menu { list-style: none; }
+    .sidebar-menu li { margin-bottom: 0.5rem; }
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    .sidebar-menu a i { width: 24px; text-align: center; }
+    .sidebar-footer {
+        margin-top: auto;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-footer a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    .sidebar-footer a:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+    .admin-main {
+        margin-left: 260px;
+        flex: 1;
+        padding: 2rem;
+        background: #f8fafc;
+        min-height: calc(100vh - 70px);
+    }
+    .dataset-header {
+        margin-bottom: 2rem;
+    }
+    .dataset-header h1 {
+        font-size: 2rem;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .dataset-header p { color: #64748b; }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .stat-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+    }
+    .stat-icon.total { background: #dbeafe; color: #1e40af; }
+    .stat-icon.published { background: #d1fae5; color: #059669; }
+    .stat-icon.pending { background: #fef3c7; color: #d97706; }
+    .stat-icon.images { background: #ede9fe; color: #6d28d9; }
+    .stat-info h3 {
+        font-size: 1.7rem;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+    }
+    .stat-info p {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    .download-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        margin-bottom: 2rem;
+    }
+    .download-panel h2 {
+        color: #1e293b;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .download-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    .download-card {
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 1.25rem;
+        border: 1px solid #e2e8f0;
+    }
+    .download-card h3 {
+        color: #334155;
+        font-size: 1.05rem;
+        margin-bottom: 0.5rem;
+    }
+    .download-card p {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .download-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    .download-btn.zip {
+        background: #10b981;
+        color: white;
+    }
+    .download-btn.csv {
+        background: #1e293b;
+        color: white;
+    }
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(30, 41, 59, 0.18);
+    }
+    .dataset-table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .dataset-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .dataset-table th {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .dataset-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .dataset-table tr:hover { background: #fafafa; }
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-published { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fee2e2; color: #991b1b; }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #94a3b8;
+    }
+    @media (max-width: 1100px) {
+        .admin-sidebar { width: 200px; }
+        .admin-main { margin-left: 200px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .admin-sidebar { display: none; }
+        .admin-main { margin-left: 0; padding: 1rem; }
+        .stats-grid, .download-grid { grid-template-columns: 1fr; }
+        .dataset-table { font-size: 0.85rem; }
+        .dataset-table th, .dataset-table td { padding: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-user-shield"></i>
+            <h2>Admin Panel</h2>
+            <p>{{ session.admin_username }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('admin_logs') }}"><i class="fas fa-history"></i> Activity Logs</a></li>
+            <li><a href="{{ url_for('admin_dataset') }}" class="active"><i class="fas fa-database"></i> Dataset</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> View Website</a>
+            <a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="dataset-header">
+            <h1><i class="fas fa-database"></i> Dataset Manager</h1>
+            <p>Export plant metadata and images for research, training, or sharing.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total"><i class="fas fa-seedling"></i></div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_plants }}</h3>
+                    <p>Total Plants</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon published"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <h3>{{ stats.published_plants }}</h3>
+                    <p>Published</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3>{{ stats.pending_plants }}</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon images"><i class="fas fa-images"></i></div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_images }}</h3>
+                    <p>Total Images</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="download-panel fade-in">
+            <h2><i class="fas fa-download"></i> Download Dataset</h2>
+            <div class="download-grid">
+                <div class="download-card">
+                    <h3>Published Plants Only</h3>
+                    <p>Recommended export for clean public datasets.</p>
+                    <div class="download-actions">
+                        <a class="download-btn zip" href="{{ url_for('admin_dataset_download_zip', status='published') }}">
+                            <i class="fas fa-file-archive"></i> ZIP Download
+                        </a>
+                        <a class="download-btn csv" href="{{ url_for('admin_dataset_download_csv', status='published') }}">
+                            <i class="fas fa-file-csv"></i> CSV Only
+                        </a>
+                    </div>
+                </div>
+                <div class="download-card">
+                    <h3>All Plants</h3>
+                    <p>Includes published, pending, and rejected submissions.</p>
+                    <div class="download-actions">
+                        <a class="download-btn zip" href="{{ url_for('admin_dataset_download_zip', status='all') }}">
+                            <i class="fas fa-file-archive"></i> ZIP Download
+                        </a>
+                        <a class="download-btn csv" href="{{ url_for('admin_dataset_download_csv', status='all') }}">
+                            <i class="fas fa-file-csv"></i> CSV Only
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dataset-table-container fade-in">
+            {% if plants %}
+            <table class="dataset-table">
+                <thead>
+                    <tr>
+                        <th>Plant</th>
+                        <th>Type / Category</th>
+                        <th>Status</th>
+                        <th>Images</th>
+                        <th>Created</th>
+                        <th>Dataset</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plant in plants %}
+                    <tr>
+                        <td>
+                            <strong>{{ plant.name }}</strong>
+                            {% if plant.marathi_name or plant.hindi_name %}
+                            <div style="color: #64748b; font-size: 0.85rem;">{{ plant.marathi_name or '-' }} / {{ plant.hindi_name or '-' }}</div>
+                            {% endif %}
+                            <div style="color: #64748b; font-size: 0.85rem;">{{ plant.scientific_name or 'No scientific name' }}</div>
+                        </td>
+                        <td>
+                            {{ plant.plant_type }}
+                            <div style="color: #64748b; font-size: 0.85rem;">{{ plant.category }}</div>
+                        </td>
+                        <td><span class="status-badge status-{{ plant.status }}">{{ plant.status|upper }}</span></td>
+                        <td><i class="fas fa-images" style="color: #10b981; margin-right: 0.35rem;"></i>{{ plant.image_count or 0 }}</td>
+                        <td>{{ plant.created_at.strftime('%b %d, %Y') if plant.created_at else 'N/A' }}</td>
+                        <td>
+                            <a class="download-btn zip" href="{{ url_for('admin_dataset_download_single_plant', plant_id=plant.id) }}" style="padding: 0.5rem 0.75rem;">
+                                <i class="fas fa-download"></i> ZIP
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-database" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>No plants available for dataset export.</p>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+</div>
+{% endblock %}
