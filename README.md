@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 🌿 Plant Information Management System (Enhanced)
 A complete Flask-based web application for managing plant information with user submissions, admin review workflow, search & filter, and dataset export capabilities.
 ✨ Features
